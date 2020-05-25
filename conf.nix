@@ -100,11 +100,11 @@ with lib;
       enable = mkEnableOption "Piwik";
       url = mkOption {
         description = "Piwik url.";
-        type = types.str;
+        type = with types; nullOr str;
       };
       IDsite = mkOption {
         description = "idsite of the website you are tracking in Piwik.";
-        type = types.str;
+        type = with types; nullOr str;
       };
     };
 
