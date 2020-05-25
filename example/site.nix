@@ -1,110 +1,85 @@
-/*-----------------------------------------------------------------------------
+/* -----------------------------------------------------------------------------
    Init
 
    Initialization of Styx, should not be edited
------------------------------------------------------------------------------*/
-{ styx
-, extraConf ? {}
-}@args:
+   -----------------------------------------------------------------------------
+*/
+{ pkgs ? import <nixpkgs> { }, extraConf ? { } }:
 
 rec {
 
-  /* Importing styx library
-  */
-  styxLib = import styx.lib styx;
+  styx = import pkgs.styx {
+    inherit pkgs;
 
+    config = [ ./conf.nix extraConf ];
 
-/*-----------------------------------------------------------------------------
-   Themes setup
+    themes = [ ../. ];
 
------------------------------------------------------------------------------*/
-
-  /* Importing styx themes from styx
-  */
-  styx-themes = import styx.themes;
-
-  /* list the themes to load, paths or packages can be used
-     items at the end of the list have higher priority
-  */
-  themes = [ ../. ];
-
-
-  /* Loading the themes data
-  */
-  themesData = styxLib.themes.load {
-    inherit styxLib themes;
-    extraEnv  = { inherit data pages; };
-    extraConf = [ ./conf.nix extraConf ];
+    env = { inherit data pages; };
   };
 
-  /* Bringing the themes data to the scope
+  # Propagating initialized data
+  inherit (styx.themes) conf files templates env lib;
+
+  /* -----------------------------------------------------------------------------
+     Data
+
+     This section declares the data used by the site
+     -----------------------------------------------------------------------------
   */
-  inherit (themesData) conf lib files templates;
 
+  data = { navbar = with pages; [ theme basic starter ]; };
 
-/*-----------------------------------------------------------------------------
-   Data
+  /* -----------------------------------------------------------------------------
+     Pages
 
-   This section declares the data used by the site
------------------------------------------------------------------------------*/
-
-  data = {
-    navbar = with pages; [ theme basic starter ];
-  };
-
-
-/*-----------------------------------------------------------------------------
-   Pages
-
-   This section declares the pages that will be generated
------------------------------------------------------------------------------*/
-
-  /* http://getbootstrap.com/getting-started/#examples
+     This section declares the pages that will be generated
+     -----------------------------------------------------------------------------
   */
+
+  # http://getbootstrap.com/getting-started/#examples
 
   pages = rec {
 
     basic = {
-      layout   = templates.layout;
+      layout = templates.layout;
       template = templates.examples.basic;
-      path     = "/basic.html";
+      path = "/basic.html";
       # example of adding extra css / js to a page
       #extraJS  = [ { src = "/pop.js"; crossorigin = "anonymous"; } ];
       #extraCSS = [ { href = "/pop.css"; } ];
-      title    = "Bootstrap 101 Template";
+      title = "Bootstrap 101 Template";
       navbarTitle = "Basic";
     };
 
     starter = {
-      layout   = templates.layout;
+      layout = templates.layout;
       template = templates.examples.starter;
-      path     = "/starter.html";
-      title    = "Starter Template for Bootstrap";
+      path = "/starter.html";
+      title = "Starter Template for Bootstrap";
       navbarTitle = "Starter";
     };
 
     theme = {
-      layout   = templates.layout;
+      layout = templates.layout;
       template = templates.examples.theme;
-      path     = "/index.html";
-      title    = "Theme Template for Bootstrap";
+      path = "/index.html";
+      title = "Theme Template for Bootstrap";
       navbarTitle = "Theme";
     };
 
   };
 
+  /* -----------------------------------------------------------------------------
+     Site
 
-/*-----------------------------------------------------------------------------
-   Site
-
------------------------------------------------------------------------------*/
-
-  /* Converting the pages attribute set to a list
+     -----------------------------------------------------------------------------
   */
+
+  # Converting the pages attribute set to a list
   pageList = lib.pagesToList { inherit pages; };
 
-  /* Generating the site
-  */
+  # Generating the site
   site = lib.mkSite { inherit files pageList; };
 
 }
